@@ -25,7 +25,7 @@
     <DocumentationFile>bin/$(Configuration)/$(TargetFramework)/$(AssemblyName).xml</DocumentationFile>
     <OutputPath />
     <PackageId>QiwiApiSharp</PackageId>
-    <PackageIconUrl>https://qiwi.com/bonuses/content/image.action?bonus=3482</PackageIconUrl>
+    <PackageIconUrl>https://www.syl.ru/misc/i/ai/164256/595866.jpg</PackageIconUrl>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)'=='Release'">
