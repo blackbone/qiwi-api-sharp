@@ -1,5 +1,5 @@
 # qiwi-api-sharp
-.NET Core compailable C# Wrapper for QIWI API
+.NET Core compatiable C# Wrapper for QIWI API
 
 # supported platforms
 Currently there are not so much supported platforms
@@ -18,8 +18,8 @@ More platforms will be supported soon.
 
 # restrictions
 There are 2 mehtods you can call without initializing api:
-* QiwiApi.MobileProvider()
-* QiwiApi.CardProvider()
+* `QiwiApi.MobileProvider()`
+* `QiwiApi.CardProvider()`
 
 Both of them used to identify phone or card number to use in payment methods.
 Other methods must be used with proper specified _token_.
