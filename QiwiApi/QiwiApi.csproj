@@ -7,7 +7,7 @@
     <Version>0</Version>
     <Company></Company>
     <Authors>Dmitrii Osipov</Authors>
-    <Description />
+    <Description>.NET Core compatiable C# Wrapper for QIWI Api. For bots and other stuff based on .NET Core and .NET Framework platforms.</Description>
     <PackageProjectUrl>https://github.com/blackboneworks/qiwi-api-sharp</PackageProjectUrl>
     <PackageLicenseUrl>https://github.com/blackboneworks/qiwi-api-sharp/blob/master/LICENSE</PackageLicenseUrl>
     <RepositoryUrl>https://github.com/blackboneworks/qiwi-api-sharp</RepositoryUrl>
