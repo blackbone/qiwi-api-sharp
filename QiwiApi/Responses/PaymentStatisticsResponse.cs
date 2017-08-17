@@ -4,7 +4,7 @@ namespace QiwiApiSharp
 {
     public class PaymentStatisticsResponse
     {
-        public Sum[] incomingTotal;
-        public Sum[] outgoingTotal;
+        public CurrencyAmount[] incomingTotal;
+        public CurrencyAmount[] outgoingTotal;
     }
 }

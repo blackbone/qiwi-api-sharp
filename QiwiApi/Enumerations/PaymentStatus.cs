@@ -2,6 +2,7 @@
 {
     public enum PaymentStatus
     {
+        Accepted,
         WAITING,
         SUCCESS,
         ERROR

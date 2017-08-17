@@ -16,9 +16,9 @@ namespace QiwiApiSharp.Entities
         public string statusText;
         public string trmTxnId;
         public string account;
-        public Sum sum;
-        public Sum comission;
-        public Sum total;
+        public CurrencyAmount sum;
+        public CurrencyAmount comission;
+        public CurrencyAmount total;
         public PaymentProvider provider;
         public string comment;
         public decimal? currencyRate;
