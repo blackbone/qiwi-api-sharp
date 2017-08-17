@@ -1,9 +1,10 @@
-﻿using QiwiApiSharp.Entities;
+﻿using System.Collections.Generic;
+using QiwiApiSharp.Entities;
 
 namespace QiwiApiSharp
 {
     public class BalanceResponse
     {
-        public Balance[] accounts;
+        public List<Balance> accounts;
     }
 }

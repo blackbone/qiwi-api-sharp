@@ -1,10 +1,11 @@
-﻿using QiwiApiSharp.Entities;
+﻿using System.Collections.Generic;
+using QiwiApiSharp.Entities;
 
 namespace QiwiApiSharp
 {
     public class PaymentStatisticsResponse
     {
-        public CurrencyAmount[] incomingTotal;
-        public CurrencyAmount[] outgoingTotal;
+        public List<CurrencyAmount> incomingTotal;
+        public List<CurrencyAmount> outgoingTotal;
     }
 }

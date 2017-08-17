@@ -16,13 +16,16 @@ namespace QiwiApiSharp
         private const string API_ENDPOINT = "edge.qiwi.com";
 
         public static bool Initialized { get; private set; }
-        public static bool Authorized { get; private set; }
 
         private static string _token;
         private static HttpClient _httpClient;
 
         #region Public Api
 
+        /// <summary>
+        ///     Initializes api with <see cref="token"/> passed.
+        /// </summary>
+        /// <param name="token"> Api token obtained from <see cref="https://qiwi.com/api"/> for instructions. </param>
         public static void Initialize(string token)
         {
             _token = token;
@@ -34,8 +37,57 @@ namespace QiwiApiSharp
             Initialized = true;
         }
 
-        public static async Task<AuthResponse> Authorize(bool authInfoEnabled = true, bool contractInfoEnabled = true, bool userInfoEnabled = true)
+        /// <summary>
+        ///     Identifies mobile provider by phone number.
+        /// </summary>
+        /// <param name="phoneNumber"> Mobile phone number - 11 digits. </param>
+        /// <returns> Mobile operator identifier. </returns>
+        /// <exception cref="ArgumentException"> If invalid number passed. </exception>
+        /// <exception cref="RequestException"> If request were not processed. </exception>
+        public static async Task<int> MobileProvider(string phoneNumber)
         {
+            if (!ValidatePhoneNumber(phoneNumber)) throw new ArgumentException("Invalid phone number.");
+            var response = await _httpClient.PostAsync("https://qiwi.com/mobile/detect.action", new FormUrlEncodedContent(new Dictionary<string, string> { { "phone", "+" + phoneNumber } }));
+            response = response.EnsureSuccessStatusCode();
+            var responseString = await response.Content.ReadAsStringAsync();
+            var content = JsonConvert.DeserializeObject<JObject>(responseString);
+            int providerId = 0;
+            if (int.TryParse(content["message"].Value<string>(), out providerId)) return providerId;
+            throw new RequestException(content["message"].Value<string>());
+        }
+
+        /// <summary>
+        ///     Identifies card emitter by card number.
+        /// </summary>
+        /// <param name="cardNumber"> Mobile phone number - 16 digits. </param>
+        /// <returns> Card emitter identifier. </returns>
+        /// <exception cref="ArgumentException"> If invalid number passed. </exception>
+        /// <exception cref="RequestException"> If request were not processed. </exception>
+        public static async Task<Provider> CardProvider(string cardNumber)
+        {
+            if(!ValidateCardNumber(cardNumber)) throw new ArgumentException("Invalid card number.");
+            var response = await _httpClient.PostAsync("https://qiwi.com/card/detect.action", new FormUrlEncodedContent(new Dictionary<string, string> { { "cardNumber", cardNumber.ToString() } }));
+            response = response.EnsureSuccessStatusCode();
+            var responseString = await response.Content.ReadAsStringAsync();
+            var content = JsonConvert.DeserializeObject<JObject>(responseString);
+            int providerId = 0;
+            if (int.TryParse(content["message"].Value<string>(), out providerId)) return (Provider)providerId;
+            throw new RequestException(content["message"].Value<string>());
+        }
+
+        /// <summary>
+        ///     Requests user profile.
+        /// </summary>
+        /// <param name="authInfoEnabled"> Is authorization info will be included in response. </param>
+        /// <param name="contractInfoEnabled"> Is contract info will be included in response. </param>
+        /// <param name="userInfoEnabled"> Is user info will be included in response. </param>
+        /// <returns> UserProfileResponse object. See <see cref="UserProfileResponse"/> for details. </returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="WalletNotFoundException"> If wallet were not found.</exception>
+        public static async Task<UserProfileResponse> UserProfile(bool authInfoEnabled = true, bool contractInfoEnabled = true, bool userInfoEnabled = true)
+        {
+            if (!Initialized) throw new NotInitializedException();
             var response = await ApiCall("person-profile/v1/profile/current", new Dictionary<string, object>
             {
                 {"authInfoEnabled", authInfoEnabled},
@@ -45,8 +97,7 @@ namespace QiwiApiSharp
 
             if (response.IsSuccessStatusCode)
             {
-                var data = JsonConvert.DeserializeObject<AuthResponse>(await response.Content.ReadAsStringAsync());
-                Authorized = true;
+                var data = JsonConvert.DeserializeObject<UserProfileResponse>(await response.Content.ReadAsStringAsync());
                 return data;
             }
             switch ((int)response.StatusCode)
@@ -59,34 +110,26 @@ namespace QiwiApiSharp
             return null;
         }
 
-        public static async Task<int> MobileProvider(long phoneNumber)
-        {
-            ValidatePhoneNumber(phoneNumber);
-            var response = await _httpClient.PostAsync("https://qiwi.com/mobile/detect.action", new FormUrlEncodedContent(new Dictionary<string, string> { { "phone", "+" + phoneNumber } }));
-            response = response.EnsureSuccessStatusCode();
-            var responseString = await response.Content.ReadAsStringAsync();
-            var content = JsonConvert.DeserializeObject<JObject>(responseString);
-            int providerId = 0;
-            if (int.TryParse(content["message"].Value<string>(), out providerId)) return providerId;
-            throw new RequestException(content["message"].Value<string>());
-        }
-
-        public static async Task<Provider> CardProvider(long cardNumber)
-        {
-            ValidateCardNumber(cardNumber);
-            var response = await _httpClient.PostAsync("https://qiwi.com/card/detect.action", new FormUrlEncodedContent(new Dictionary<string, string> { { "cardNumber", cardNumber.ToString() } }));
-            response = response.EnsureSuccessStatusCode();
-            var responseString = await response.Content.ReadAsStringAsync();
-            var content = JsonConvert.DeserializeObject<JObject>(responseString);
-            int providerId = 0;
-            if (int.TryParse(content["message"].Value<string>(), out providerId)) return (Provider)providerId;
-            throw new RequestException(content["message"].Value<string>());
-        }
-
-        public static async Task<PaymentHistoryResponse> PaymentHistory(long walletId, int rows, Operation operation, Source[] sources, DateTime? startDate = null, DateTime? endDate = null, DateTime? nextTxnDate = null, long? nextTxnId = null)
+        /// <summary>
+        ///     Requests payment history. 
+        /// </summary>
+        /// <param name="walletId"> Id of wallet for history request. </param>
+        /// <param name="rows"> Rows count to request. </param>
+        /// <param name="operation"> Wallet operation to include in response. See <see cref="Operation"/> for possible variaties. </param>
+        /// <param name="sources"> Wallet sources to include in response. See <see cref="Source"/> for possible variaties. </param>
+        /// <param name="startDate"> Start date to request history. Must be specified with <see cref="endDate"/>. </param>
+        /// <param name="endDate"> End date to request history. Must be specified with <see cref="startDate"/>. </param>
+        /// <param name="nextTxnDate"> Txn date to request from previous list. See <see cref="PaymentHistoryResponse.nextTxnDate"/> in <see cref="PaymentHistoryResponse"/>. Must be specified with <see cref="nextTxnId"/>. </param>
+        /// <param name="nextTxnId">Txn previous id to request from previous list. See <see cref="PaymentHistoryResponse.nextTxnId"/> in <see cref="PaymentHistoryResponse"/>. Must be specified with <see cref="nextTxnDate"/>.</param>
+        /// <returns> PaymentHistoryResponse object. See <see cref="PaymentHistoryResponse"/> for details. </returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="ArgumentException"> If wallet id is not a phone number format. </exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="TransactionNotFoundException"> If transaction is missing or no transactions can be found with spocified signs. </exception>
+        public static async Task<PaymentHistoryResponse> PaymentHistory(string walletId, int rows, Operation operation, Source[] sources, DateTime? startDate = null, DateTime? endDate = null, DateTime? nextTxnDate = null, long? nextTxnId = null)
         {
             if (!Initialized) throw new NotInitializedException();
-            if(!Authorized) throw new UnauthorizedException();
+            if (!ValidatePhoneNumber(walletId)) throw new ArgumentException("Invalid wallet id.");
             var query = new Dictionary<string, object>
             {
                 {"rows", rows },
@@ -124,8 +167,23 @@ namespace QiwiApiSharp
             return null;
         }
 
-        public static async Task<PaymentStatisticsResponse> PaymentStatistics(long walletId, DateTime startDate, DateTime endDate, Operation operation, Source[] sources)
+        /// <summary>
+        ///     Requests payments statistics for period.
+        /// </summary>
+        /// <param name="walletId"> Id of wallet for history request. </param>
+        /// <param name="startDate"> Start date to request history. Must be specified with <see cref="endDate"/>. </param>
+        /// <param name="endDate"> End date to request history. Must be specified with <see cref="startDate"/>. </param>
+        /// <param name="operation"> Wallet operation to include in response. See <see cref="Operation"/> for possible variaties. </param>
+        /// <param name="sources"> Wallet sources to include in response. See <see cref="Source"/> for possible variaties. </param>
+        /// <returns> PaymentStatisticsResponse object. See <see cref="PaymentStatisticsResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="ArgumentException"> If wallet id is not a phone number format. </exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>        
+        /// <exception cref="TransactionNotFoundException"> If transaction is missing or no transactions can be found with spocified signs. </exception>
+        public static async Task<PaymentStatisticsResponse> PaymentStatistics(string walletId, DateTime startDate, DateTime endDate, Operation operation, Source[] sources)
         {
+            if (!Initialized) throw new NotInitializedException();
+            if (!ValidatePhoneNumber(walletId)) throw new ArgumentException("Invalid wallet id.");
             var query = new Dictionary<string, object>
             {
                 {"startDate", startDate.ToString("s") + "Z"  },
@@ -151,8 +209,16 @@ namespace QiwiApiSharp
             return null;
         }
 
+        /// <summary>
+        ///     Requests balance for current user.
+        /// </summary>
+        /// <returns> BalanceResponse object. See <see cref="BalanceResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="WalletNotFoundException"> If wallet were not found.</exception>
         public static async Task<BalanceResponse> Balance()
         {
+            if (!Initialized) throw new NotInitializedException();
             var response = await ApiCall("funding-sources/v1/accounts/current", null);
             if (response.IsSuccessStatusCode)
             {
@@ -169,16 +235,16 @@ namespace QiwiApiSharp
             return null;
         }
 
-        public static async Task<CommissionResponse> Comission(long walletId, Provider provider)
+        /// <summary>
+        ///     Requests comission for payment provider.
+        /// </summary>
+        /// <param name="provider"> Provider id. See <see cref="Provider"/> for ids, or <see cref="MobileProvider"/> or <see cref="CardProvider"/> to get provider id from phone or card number.</param>
+        /// <returns> CommissionResponse object. See <see cref="CommissionResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        public static async Task<CommissionResponse> Comission(int provider)
         {
-            int providerId = 0;
-            if (provider == Provider.MobilePhone)
-            {
-                providerId = await MobileProvider(walletId);
-            }
-            else providerId = (int)provider;
-
-            var response = await ApiCall("sinap/providers/" + providerId + "/form", null);
+            if (!Initialized) throw new NotInitializedException();
+            var response = await ApiCall("sinap/providers/" + provider + "/form", null);
             if (response.IsSuccessStatusCode)
             {
                 var data = JsonConvert.DeserializeObject<CommissionResponse>(await response.Content.ReadAsStringAsync());
@@ -188,33 +254,88 @@ namespace QiwiApiSharp
             return null;
         }
 
-        public static async Task<PaymentResponse> QiwiPayment(Currency currency, double amount, long phoneNumber)
+        /// <summary>
+        ///     Makes payment to other qiwi wallet.
+        /// </summary>
+        /// <param name="currency"> <see cref="Currency"/> of payment. </param>
+        /// <param name="amount"> Funds amount to pay. </param>
+        /// <param name="phoneNumber"> Phone number of recipient. </param>
+        /// <returns> PaymentResponse object. See <see cref="PaymentResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="ArgumentException"> If phone number  of recipient is invalid. </exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="WalletNotFoundException"> If wallet were not found.</exception>
+        public static async Task<PaymentResponse> QiwiPayment(Currency currency, double amount, string phoneNumber)
         {
-            ValidatePhoneNumber(phoneNumber);
+            if (!Initialized) throw new NotInitializedException();
+            if(!ValidatePhoneNumber(phoneNumber)) throw new ArgumentException("Invalid phone number.");
             return await Payment(99, currency, amount, "+" + phoneNumber);
         }
 
-        public static async Task<PaymentResponse> MobilePayment(Currency currency, double amount, long phoneNumber)
+        /// <summary>
+        ///     Makes moblie payment.
+        /// </summary>
+        /// <param name="currency"> <see cref="Currency"/> of payment. </param>
+        /// <param name="amount"> Funds amount to pay. </param>
+        /// <param name="phoneNumber"> Phone number of to send funds. </param>
+        /// <returns> PaymentResponse object. See <see cref="PaymentResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="ArgumentException"> If phone number is invalid. </exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="WalletNotFoundException"> If wallet were not found.</exception>
+        public static async Task<PaymentResponse> MobilePayment(Currency currency, double amount, string phoneNumber)
         {
-            ValidatePhoneNumber(phoneNumber);
+            if (!Initialized) throw new NotInitializedException();
+            if (!ValidatePhoneNumber(phoneNumber)) throw new ArgumentException("Invalid phone number.");
             var providerId = await MobileProvider(phoneNumber);
             return await Payment(providerId, currency, amount, phoneNumber.ToString().Substring(1));
         }
 
-        public static async Task<PaymentResponse> CardPayment(Currency currency, double amount, long cardNumber)
+        /// <summary>
+        ///     Makes card payment.
+        /// </summary>
+        /// <param name="currency"> <see cref="Currency"/> of payment. </param>
+        /// <param name="amount"> Funds amount to pay. </param>
+        /// <param name="cardNumber"> Card number of recipient. </param>
+        /// <returns> PaymentResponse object. See <see cref="PaymentResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="ArgumentException"> If phone number is invalid. </exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="WalletNotFoundException"> If wallet were not found.</exception>
+        public static async Task<PaymentResponse> CardPayment(Currency currency, double amount, string cardNumber)
         {
-            ValidateCardNumber(cardNumber);
+            if (!Initialized) throw new NotInitializedException();
+            if(!ValidateCardNumber(cardNumber)) throw new ArgumentException("Invalid card number.");
             var providerId = await CardProvider(cardNumber);
-            return await Payment((int)providerId, currency, amount, cardNumber.ToString());
+            return await Payment((int)providerId, currency, amount, cardNumber);
         }
 
-        public static async Task<PaymentResponse> BankPayment(Currency currency, double amount, long cardNumber, short expDate, short accountType)
+        /// <summary>
+        ///     Makes bank payment.
+        /// </summary>
+        /// <param name="currency"> <see cref="Currency"/> of payment. </param>
+        /// <param name="amount"> Funds amount to pay. </param>
+        /// <param name="cardOrAccountNumber"> Card number of recipient. </param>
+        /// <param name="expDate"> Card expiration date in 4 digits format. </param>
+        /// <param name="accountType"> Bank account type.
+        /// (1 - card, 3 - contract) for <see cref="Provider.Tinkoff"/>.
+        /// (1 - card, 2 - account) for <see cref="Provider.AlfaBank"/>.
+        /// (7 - card, 9 - account) for <see cref="Provider.PromsvyazBank"/>.
+        /// (1 - card, 2 - account, 3 - contract) for <see cref="Provider.RussianStandard"/>.
+        /// </param>
+        /// <returns> PaymentResponse object. See <see cref="PaymentResponse"/> for details.</returns>
+        /// <exception cref="NotInitializedException"> If Qiwi Api were not initalized calling QiwiApi.Initialize(*token*).</exception>
+        /// <exception cref="ArgumentException"> If card or bank account number is invalid. </exception>
+        /// <exception cref="UnauthorizedException"> If token is invalid or were expired.</exception>
+        /// <exception cref="WalletNotFoundException"> If wallet were not found.</exception>
+        public static async Task<PaymentResponse> BankPayment(Currency currency, double amount, string cardOrAccountNumber, short expDate, short accountType)
         {
-            ValidateCardNumber(cardNumber);
-            ValidateExpDate(expDate);
-            var providerId = await CardProvider(cardNumber);
-            ValidateAccountType(providerId, accountType);
-            return await Payment((int)providerId, currency, amount, cardNumber.ToString(), expDate, accountType);
+            if (!Initialized) throw new NotInitializedException();
+            if(!ValidateCardNumber(cardOrAccountNumber) && !ValidateBankAccountNumber(cardOrAccountNumber)) throw new ArgumentException("Card or bank account number is invalid.");
+            if(!ValidateExpDate(expDate)) throw new ArgumentException("Invalid expiration date.");
+            var providerId = await CardProvider(cardOrAccountNumber);
+            if(!ValidateAccountType(providerId, accountType)) throw new ArgumentException("Invalid account type date.");
+            return await Payment((int)providerId, currency, amount, cardOrAccountNumber, expDate, accountType);
         }
 
         #endregion
@@ -285,48 +406,53 @@ namespace QiwiApiSharp
 
         #region Validation
 
-        private static void ValidateAccountType(Provider providerId, short accountType)
+        private static bool ValidateAccountType(Provider providerId, short accountType)
         {
             switch (providerId)
             {
                 case Provider.Tinkoff:
-                    if(accountType != 1 && accountType != 3) throw new ArgumentException("Invalid account type date.");
+                    if (accountType == 1 || accountType == 3) return true;
                     break;
                 case Provider.AlfaBank:
-                    if (accountType != 1 && accountType != 2) throw new ArgumentException("Invalid account type date.");
+                    if (accountType == 1 || accountType == 2) return true;
                     break;
                 case Provider.PromsvyazBank:
-                    if (accountType != 7 && accountType != 9) throw new ArgumentException("Invalid account type date.");
+                    if (accountType == 7 || accountType == 9) return true;
                     break;
                 case Provider.RussianStandard:
-                    if (accountType != 1 && accountType != 2 && accountType != 3) throw new ArgumentException("Invalid account type date.");
+                    if (accountType == 1 || accountType == 2 || accountType == 3) return true;
                     break;
             }
+            return false;
         }
 
-        private static void ValidateExpDate(short expDate)
+        private static bool ValidateExpDate(short expDate)
         {
             if(DigitsCount(expDate) != 4) throw new ArgumentException("Invalid expiration date.");
             var m = expDate / 100;
             var y = expDate % 100;
-            if(new DateTime(2000 + y, m, 0) < DateTime.Now.Date) throw new ArgumentException("Invalid expiration date.");
+            return new DateTime(2000 + y, m, 0) > DateTime.Now.Date;
         }
 
-        private static void ValidateCardNumber(long phoneNumber)
+        private static bool ValidateBankAccountNumber(string bankAccountNumber)
         {
-            if (DigitsCount(phoneNumber) != 16) throw new ArgumentException("Invalid card number.");
+            return bankAccountNumber.Length == 16;
         }
 
-        private static void ValidatePhoneNumber(long phoneNumber)
+        private static bool ValidateCardNumber(string cardNumber)
         {
-            if (DigitsCount(phoneNumber) != 11) throw new ArgumentException("Invalid phone number.");
+            return cardNumber.Length == 16;
         }
 
-        private static int DigitsCount(long number)
+        private static bool ValidatePhoneNumber(string phoneNumber)
         {
-            return (int)(number == 0 ? 1 : Math.Floor(Math.Log10(Math.Abs(number)) + 1));
+            return phoneNumber.Length == 11;
         }
 
+        private static long DigitsCount(long n)
+        {
+            return (long) (n == 0 ? 1 : Math.Floor(Math.Log10(Math.Abs(n)) + 1));
+        }
         #endregion
     }
 }

@@ -2,7 +2,7 @@
 
 namespace QiwiApiSharp
 {
-    public class AuthResponse
+    public class UserProfileResponse
     {
         public AuthInfo authInfo;
         public ContractInfo contractInfo;

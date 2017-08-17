@@ -1,4 +1,5 @@
-﻿using QiwiApiSharp.Entities;
+﻿using System.Collections.Generic;
+using QiwiApiSharp.Entities;
 
 namespace QiwiApiSharp
 {
@@ -19,6 +20,6 @@ namespace QiwiApiSharp
 
     public class CommissionResponseComission
     {
-        public CommissionRange[] ranges;
+        public List<CommissionRange> ranges;
     }
 }
