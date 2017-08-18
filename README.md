@@ -1,11 +1,19 @@
 # qiwi-api-sharp
 .NET Core compatiable C# Wrapper for QIWI API
 
+| **Build:** | **NuGet:** |
+| ---------- | ---------- |
+| [![Build status](https://ci.appveyor.com/api/projects/status/o5brg47tpiqwii1f/branch/master?svg=true)](https://ci.appveyor.com/project/blackboneworks/qiwi-api-sharp/branch/master) | [![NuGet](https://img.shields.io/nuget/dt/Microsoft.AspNetCore.Mvc.svg)](https://www.nuget.org/packages/QiwiApiSharp/)) [![NuGet](https://img.shields.io/nuget/v/Nuget.Core.svg)](https://www.nuget.org/packages/QiwiApiSharp/) |
+
 # supported platforms
 Currently there are not so much supported platforms
 * .NET Standard 1.1
+* .NET Standard 1.2
 * .NET Standard 1.3
+* .NET Standard 1.4
+* .NET Standard 1.5
 * .NET Standard 1.6
+* .NET Standard 2.0
 * .NET Framework 4.5
 * .NET Framework 4.6
 * .NET Framework 4.6.1
