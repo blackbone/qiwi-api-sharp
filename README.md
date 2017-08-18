@@ -3,7 +3,7 @@
 
 | **Build:** | **NuGet:** |
 | ---------- | ---------- |
-| [![Build status](https://ci.appveyor.com/api/projects/status/c7y65lkrf357s9aj/branch/master?svg=true)](https://ci.appveyor.com/project/blackboneworks/qiwi-api-sharp/branch/master) | [![NuGet](https://img.shields.io/nuget/dt/QiwiApiSharp.svg)](https://www.nuget.org/packages/QiwiApiSharp) [![NuGet](https://img.shields.io/nuget/dt/QiwiApiSharp.svg)](https://www.nuget.org/packages/QiwiApiSharp) |
+| [![Build status](https://ci.appveyor.com/api/projects/status/c7y65lkrf357s9aj/branch/master?svg=true)](https://ci.appveyor.com/project/blackboneworks/qiwi-api-sharp/branch/master) | [![NuGet](https://img.shields.io/nuget/v/QiwiApiSharp.svg)](https://www.nuget.org/packages/QiwiApiSharp) [![NuGet](https://img.shields.io/nuget/dt/QiwiApiSharp.svg)](https://www.nuget.org/packages/QiwiApiSharp) |
 
 # supported platforms
 Currently there are not so much supported platforms
