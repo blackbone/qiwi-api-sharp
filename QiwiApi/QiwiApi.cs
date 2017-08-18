@@ -25,7 +25,7 @@ namespace QiwiApiSharp
         /// <summary>
         ///     Initializes api with <see cref="token"/> passed.
         /// </summary>
-        /// <param name="token"> Api token obtained from <see cref="https://qiwi.com/api"/> for instructions. </param>
+        /// <param name="token"> Api token obtained from <see href="https://qiwi.com/api"/> for instructions. </param>
         public static void Initialize(string token)
         {
             _token = token;
