@@ -22,7 +22,7 @@ namespace QiwiApiSharp.Entities
         public PaymentProvider provider;
         public string comment;
         public decimal? currencyRate;
-        public Dictionary<string, object> extras;
+        public object extras;
         public bool? chequeReady;
         public bool? bankDocumentAvailable;
         public bool? bankDocumentReady;
