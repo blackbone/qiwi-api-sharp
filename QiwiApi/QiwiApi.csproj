@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFrameworks>netstandard1.1;netstandard1.2;netstandard1.3;netstandard1.4;netstandard1.5;netstandard1.6;netstandard2.0;net45;net46;net461;net462;net47;</TargetFrameworks>
+        <TargetFrameworks>net45;net451;net452;net46;net461;net462;net47;net471;net472;net48;net5.0;netcoreapp3.1;netstandard1.1;netstandard1.2;netstandard1.3;netstandard1.4;netstandard1.5;netstandard1.6;netstandard1.7;netstandard2.0;netstandard2.1</TargetFrameworks>
         <RootNamespace>QiwiApiSharp</RootNamespace>
         <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
         <Version>0</Version>
@@ -33,20 +33,20 @@
     </PropertyGroup>
 
     <Choose>
-        <When Condition="'$(TargetFramework)' == 'net45' Or'$(TargetFramework)' == 'net46' Or '$(TargetFramework)' == 'net461' Or'$(TargetFramework)' == 'net462' Or'$(TargetFramework)' == 'net47'">
+        <When Condition="'$(TargetFramework)' == 'net45' Or '$(TargetFramework)' == 'net451' Or '$(TargetFramework)' == 'net452' Or '$(TargetFramework)' == 'net46' Or '$(TargetFramework)' == 'net461' Or'$(TargetFramework)' == 'net462' Or '$(TargetFramework)' == 'net47'  Or '$(TargetFramework)' == 'net471' Or '$(TargetFramework)' == 'net472'  Or '$(TargetFramework)' == 'net48'">
             <ItemGroup>
-                <PackageReference Include="System.Net.Http" Version="4.3.2" />
+                <PackageReference Include="System.Net.Http" Version="4.3.4" />
             </ItemGroup>
         </When>
-        <When Condition="'$(TargetFramework)' == 'netstandard1.1' Or '$(TargetFramework)' == 'netstandard1.2' Or '$(TargetFramework)' == 'netstandard1.3' Or '$(TargetFramework)' == 'netstandard1.4' Or '$(TargetFramework)' == 'netstandard1.5' Or '$(TargetFramework)' == 'netstandard1.6' Or '$(TargetFramework)' == 'netstandard2.0'">
+        <When Condition="'$(TargetFramework)' == 'netstandard1.1' Or '$(TargetFramework)' == 'netstandard1.2' Or '$(TargetFramework)' == 'netstandard1.3' Or '$(TargetFramework)' == 'netstandard1.4' Or '$(TargetFramework)' == 'netstandard1.5' Or '$(TargetFramework)' == 'netstandard1.6' Or '$(TargetFramework)' == 'netstandard1.7' Or '$(TargetFramework)' == 'netstandard2.0' Or '$(TargetFramework)' == 'netstandard2.1'">
             <ItemGroup>
-                <PackageReference Include="System.Net.Http" Version="4.3.2" />
+                <PackageReference Include="System.Net.Http" Version="4.3.4" />
             </ItemGroup>
         </When>
     </Choose>
 
     <ItemGroup>
-        <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
+        <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     </ItemGroup>
 
 </Project>
